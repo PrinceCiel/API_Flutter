@@ -1,72 +1,65 @@
 import 'dart:convert';
+import 'package:api_flutter/models/category_models.dart';
+import 'package:api_flutter/models/product_models.dart';
+import 'package:api_flutter/pages/products/detail.dart';
+import 'package:api_flutter/services/product_service.dart';
 import 'package:api_flutter/pages/posts/create_post.dart';
 import 'package:api_flutter/pages/posts/detail_post.dart';
 import 'package:flutter/material.dart';
-import 'package:api_flutter/models/post_models.dart';
-import 'package:api_flutter/services/post_service.dart';
 // import 'package:api_flutter/pages/posts/detail_posts_screen.dart';
 // import 'package:api_flutter/pages/posts/create_post_screen.dart';
 
-class ListPostScreen extends StatefulWidget {
-  const ListPostScreen({super.key});
+class ListProductScreen extends StatefulWidget {
+  final int idCategory;
+  const ListProductScreen({Key? key, required this.idCategory}) : super(key: key);
 
   @override
-  State<ListPostScreen> createState() => _ListPostScreenState();
+  State<ListProductScreen> createState() => _ListProductScreenState();
 }
 
-class _ListPostScreenState extends State<ListPostScreen> {
-  late Future<PostModel> _futurePosts;
+class _ListProductScreenState extends State<ListProductScreen> {
+  late Future<ProductModel> _futureProducts;
 
   @override
   void initState() {
     super.initState();
-    _futurePosts = PostService.listPosts();
+    _futureProducts = ProductService.listProductsByCategory(widget.idCategory);;
   }
 
   void _refreshPosts() {
     setState(() {
-      _futurePosts = PostService.listPosts();
+      _futureProducts = ProductService.listProductsByCategory(widget.idCategory);;
     });
   }
 
-  String _formatDate(dynamic date) {
-    if (date == null) return '';
+  // String _formatDate(dynamic date) {
+  //   if (date == null) return '';
 
-    if (date is DateTime) {
-      return '${date.day}/${date.month}/${date.year}';
-    }
+  //   if (date is DateTime) {
+  //     return '${date.day}/${date.month}/${date.year}';
+  //   }
 
-    if (date is String) {
-      final d = DateTime.tryParse(date);
-      if (d != null) {
-        return '${d.day}/${d.month}/${d.year}';
-      }
-    }
+  //   if (date is String) {
+  //     final d = DateTime.tryParse(date);
+  //     if (d != null) {
+  //       return '${d.day}/${d.month}/${d.year}';
+  //     }
+  //   }
 
-    return '';
-  }
+  //   return '';
+  // }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Posts'),
+        title: const Text('My Products'),
         actions: [
           IconButton(onPressed: _refreshPosts, icon: const Icon(Icons.refresh)),
-          IconButton(
-            onPressed: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const CreatePostScreen()),
-              );
-              if (result == true) _refreshPosts();
-            },
-            icon: const Icon(Icons.add),
-          ),
         ],
       ),
-      body: FutureBuilder<PostModel>(
-        future: _futurePosts,
+      body: FutureBuilder<ProductModel>(
+        future: _futureProducts,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -75,15 +68,15 @@ class _ListPostScreenState extends State<ListPostScreen> {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
 
-          final posts = snapshot.data?.data ?? [];
-          if (posts.isEmpty) {
-            return const Center(child: Text('No posts found'));
+          final products = snapshot.data?.data ?? [];
+          if (products.isEmpty) {
+            return const Center(child: Text('No products found'));
           }
 
           return ListView.builder(
-            itemCount: posts.length,
+            itemCount: products.length,
             itemBuilder: (context, index) {
-              final post = posts[index];
+              final product = products[index];
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 child: ListTile(
@@ -91,14 +84,14 @@ class _ListPostScreenState extends State<ListPostScreen> {
                     final result = await Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => PostDetailScreen(post: post),
+                        builder: (_) => ProductDetailScreen(product: product),
                       ),
                     );
                     if (result == true) _refreshPosts();
                   },
-                  leading: post.foto != null && post.foto!.isNotEmpty
+                  leading: product.foto != null && product.foto!.isNotEmpty
                       ? Image.network(
-                          'http://127.0.0.1:8000/storage/${post.foto!}',
+                          'http://127.0.0.1:8000/storage/${product.foto!}',
                           width: 50,
                           height: 50,
                           fit: BoxFit.cover,
@@ -106,20 +99,19 @@ class _ListPostScreenState extends State<ListPostScreen> {
                               const Icon(Icons.broken_image),
                         )
                       : const Icon(Icons.article),
-                  title: Text(post.title ?? 'No Title'),
+                  title: Text(product.name ?? 'No Title'),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (post.content != null && post.content!.isNotEmpty)
+                      if (product.desc != null && product.desc!.isNotEmpty)
                         Text(
-                          post.content!,
+                          product.desc!,
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
-                      Text(
-                        '${_formatDate(post.createdAt)} • ${post.status == 1 ? "Published" : "Draft"}',
+                      Text(product.category?.name ?? 'Tanpa Kategori',
                         style: TextStyle(
-                          color: post.status == 1
+                          color: product.idCategory == 1
                               ? Colors.green
                               : Colors.orange,
                           fontSize: 12,
@@ -127,7 +119,7 @@ class _ListPostScreenState extends State<ListPostScreen> {
                       ),
                     ],
                   ),
-                  trailing: Text('#${post.id}'),
+                  trailing: Text('Rp.${product.price}', style: TextStyle(fontSize: 15),),
                 ),
               );
             },

@@ -1,31 +1,36 @@
+// ignore_for_file: unnecessary_string_interpolations
+
 import 'dart:convert';
+import 'package:api_flutter/models/order_models.dart';
+import 'package:api_flutter/pages/orders/detail.dart';
 import 'package:api_flutter/pages/posts/create_post.dart';
 import 'package:api_flutter/pages/posts/detail_post.dart';
+import 'package:api_flutter/services/order_services.dart';
 import 'package:flutter/material.dart';
 import 'package:api_flutter/models/post_models.dart';
 import 'package:api_flutter/services/post_service.dart';
 // import 'package:api_flutter/pages/posts/detail_posts_screen.dart';
 // import 'package:api_flutter/pages/posts/create_post_screen.dart';
 
-class ListPostScreen extends StatefulWidget {
-  const ListPostScreen({super.key});
+class ListOrdersScreen extends StatefulWidget {
+  const ListOrdersScreen({super.key});
 
   @override
-  State<ListPostScreen> createState() => _ListPostScreenState();
+  State<ListOrdersScreen> createState() => _ListOrdersScreenState();
 }
 
-class _ListPostScreenState extends State<ListPostScreen> {
-  late Future<PostModel> _futurePosts;
+class _ListOrdersScreenState extends State<ListOrdersScreen> {
+  late Future<OrderModel> _futureOrders;
 
   @override
   void initState() {
     super.initState();
-    _futurePosts = PostService.listPosts();
+    _futureOrders = OrderServices.listOrders();
   }
 
   void _refreshPosts() {
     setState(() {
-      _futurePosts = PostService.listPosts();
+      _futureOrders = OrderServices.listOrders();
     });
   }
 
@@ -65,8 +70,8 @@ class _ListPostScreenState extends State<ListPostScreen> {
           ),
         ],
       ),
-      body: FutureBuilder<PostModel>(
-        future: _futurePosts,
+      body: FutureBuilder<OrderModel>(
+        future: _futureOrders,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -75,15 +80,15 @@ class _ListPostScreenState extends State<ListPostScreen> {
             return Center(child: Text('Error: ${snapshot.error}'));
           }
 
-          final posts = snapshot.data?.data ?? [];
-          if (posts.isEmpty) {
-            return const Center(child: Text('No posts found'));
+          final orders = snapshot.data?.data ?? [];
+          if (orders.isEmpty) {
+            return const Center(child: Text('No orders found'));
           }
 
           return ListView.builder(
-            itemCount: posts.length,
+            itemCount: orders.length,
             itemBuilder: (context, index) {
-              final post = posts[index];
+              final order = orders[index];
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 child: ListTile(
@@ -91,43 +96,32 @@ class _ListPostScreenState extends State<ListPostScreen> {
                     final result = await Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (_) => PostDetailScreen(post: post),
+                        builder: (_) => OrderDetailPage(orderCode: order.orderCode!),
                       ),
                     );
                     if (result == true) _refreshPosts();
                   },
-                  leading: post.foto != null && post.foto!.isNotEmpty
-                      ? Image.network(
-                          'http://127.0.0.1:8000/storage/${post.foto!}',
-                          width: 50,
-                          height: 50,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
-                              const Icon(Icons.broken_image),
-                        )
-                      : const Icon(Icons.article),
-                  title: Text(post.title ?? 'No Title'),
+                  leading: const Icon(Icons.article),
+                  title: Text(order.orderCode ?? 'No Title'),
                   subtitle: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (post.content != null && post.content!.isNotEmpty)
-                        Text(
-                          post.content!,
+                      if (order.total != null && order.total!.toString().isNotEmpty)
+                        Text('Total : Rp.'+
+                          order.total.toString(),
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
                       Text(
-                        '${_formatDate(post.createdAt)} • ${post.status == 1 ? "Published" : "Draft"}',
+                        '${_formatDate(order.createdAt)}',
                         style: TextStyle(
-                          color: post.status == 1
-                              ? Colors.green
-                              : Colors.orange,
+                          color:Colors.orange,
                           fontSize: 12,
                         ),
                       ),
                     ],
                   ),
-                  trailing: Text('#${post.id}'),
+                  trailing: Text('#${order.id}'),
                 ),
               );
             },

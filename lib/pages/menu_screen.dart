@@ -1,4 +1,7 @@
+import 'package:api_flutter/pages/orders/list.dart';
 import 'package:api_flutter/pages/posts/list_post_screen.dart';
+import 'package:api_flutter/pages/products/category.dart';
+import 'package:api_flutter/pages/products/list_products.dart';
 import 'package:flutter/material.dart';
 import 'package:api_flutter/pages/home_screen.dart';
 import 'package:api_flutter/pages/profile_screen.dart';
@@ -15,7 +18,8 @@ class _MenuScreenState extends State<MenuScreen> {
 
   final List<Widget> _pages = [
     const HomeScreen(),
-    const ListPostScreen(),
+    const ListCategoryScreen(),
+    const ListOrdersScreen(),
     const ProfileScreen(),
   ];
 
@@ -61,7 +65,11 @@ class _MenuScreenState extends State<MenuScreen> {
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.article_outlined),
-                label: 'Profile',
+                label: 'Products',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.article_outlined),
+                label: 'Orders',
               ),
               BottomNavigationBarItem(
                 icon: Icon(Icons.person_outline),
